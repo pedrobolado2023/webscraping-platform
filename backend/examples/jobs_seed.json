@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Public Example Job",
+    "url": "https://httpbin.org/html",
+    "login_method": "none",
+    "credentials_id": null,
+    "script": "// Extract all paragraphs\nconst paragraphs = Array.from(document.querySelectorAll('p')).map(p => p.textContent);\nreturn { paragraphs };"
+  }
+]
