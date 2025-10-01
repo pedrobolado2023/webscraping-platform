@@ -1,18 +1,10 @@
 # Configuração para EasyPanel - Monorepo
 
-## ⚠️ IMPORTANTE: Configuração de Monorepo
+## ⚠️ SOLUÇÃO: Usar Variável SERVICE_TYPE
 
-Este projeto usa uma estrutura de monorepo (múltiplos serviços em um repositório). No EasyPanel, você precisa criar **serviços separados** para cada parte.
+Como o EasyPanel não suporta Root Directory, criei uma configuração que usa a variável de ambiente `SERVICE_TYPE` para determinar qual serviço executar.
 
 ## Deployment no EasyPanel
-
-### 1. Preparação do Repositório GitHub
-
-✅ **Já feito** - Código está em: `https://github.com/pedrobolado2023/webscraping-platform`
-
-### 2. Configuração no EasyPanel
-
-#### **Ordem de Deploy (IMPORTANTE):**
 
 ### **1º - PostgreSQL Database**
 - **Template**: PostgreSQL
@@ -20,77 +12,64 @@ Este projeto usa uma estrutura de monorepo (múltiplos serviços em um repositó
 - **Database**: `webscraping`
 - **Username**: `postgres`
 - **Password**: `[gere uma senha segura]`
-- **Port**: 5432
 
 ### **2º - Redis Cache**
 - **Template**: Redis
 - **Nome**: `webscraping-redis`
-- **Port**: 6379
 
 ### **3º - Backend API**
 - **Tipo**: App from Source
-- **Source**: GitHub Repository
 - **Repository**: `pedrobolado2023/webscraping-platform`
 - **Branch**: `main`
-- **Root Directory**: `backend/` ⚠️ **CRÍTICO**
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-- **Port**: 8000
-- **Build Provider**: Nixpacks (detectará Python automaticamente)
+- **Build Provider**: Nixpacks (detectará Python pelo requirements.txt)
 
-**Variáveis de Ambiente do Backend:**
+**Variáveis de Ambiente:**
 ```
+SERVICE_TYPE=backend
 DATABASE_URL=postgresql://postgres:[SUA_SENHA]@[DB_HOST]:5432/webscraping
 REDIS_URL=redis://[REDIS_HOST]:6379/0
-SECRET_KEY=[GERE_UMA_CHAVE_SEGURA_ALEATORIA]
+SECRET_KEY=[GERE_UMA_CHAVE_SEGURA]
 FRONTEND_URL=https://[SEU_FRONTEND_DOMAIN]
 ```
 
 ### **4º - Worker**
 - **Tipo**: App from Source
-- **Source**: GitHub Repository  
 - **Repository**: `pedrobolado2023/webscraping-platform`
 - **Branch**: `main`
-- **Root Directory**: `worker/` ⚠️ **CRÍTICO**
-- **Build Command**: `pip install -r requirements.txt && playwright install chromium --with-deps`
-- **Start Command**: `python worker.py`
 - **Build Provider**: Nixpacks
 
-**Variáveis de Ambiente do Worker:**
+**Variáveis de Ambiente:**
 ```
+SERVICE_TYPE=worker
 DATABASE_URL=postgresql://postgres:[SUA_SENHA]@[DB_HOST]:5432/webscraping
 REDIS_URL=redis://[REDIS_HOST]:6379/0
 ```
 
 ### **5º - Frontend**
 - **Tipo**: App from Source
-- **Source**: GitHub Repository
 - **Repository**: `pedrobolado2023/webscraping-platform`
 - **Branch**: `main`
-- **Root Directory**: `frontend/` ⚠️ **CRÍTICO**
-- **Build Command**: `npm install && npm run build`
-- **Start Command**: `npm run preview -- --host 0.0.0.0 --port 3000`
-- **Port**: 3000
-- **Build Provider**: Nixpacks (detectará Node.js automaticamente)
+- **Build Provider**: Nixpacks
 
-**Variáveis de Ambiente do Frontend:**
+**Variáveis de Ambiente:**
 ```
+SERVICE_TYPE=frontend
 VITE_API_URL=https://[SEU_BACKEND_DOMAIN]
 ```
 
-## 3. Configurações Especiais para Monorepo
+## 🔧 Como Funciona
 
-### **Root Directory é OBRIGATÓRIO**
-Para cada serviço no EasyPanel, você DEVE especificar:
-- Backend: `Root Directory = backend/`
-- Frontend: `Root Directory = frontend/`  
-- Worker: `Root Directory = worker/`
+O arquivo `nixpacks.toml` na raiz detecta a variável `SERVICE_TYPE` e:
+- `SERVICE_TYPE=backend` → Executa o backend FastAPI
+- `SERVICE_TYPE=worker` → Executa o worker Playwright  
+- `SERVICE_TYPE=frontend` → Executa o frontend React
 
-### **Arquivos de Configuração Criados**
-Cada serviço agora tem:
-- `nixpacks.toml` - Configuração Nixpacks
-- `Procfile` - Comandos de execução
-- `runtime.txt` - Versão do Python (backend/worker)
+## ⚠️ IMPORTANTE
+
+**Para cada serviço no EasyPanel, você DEVE configurar a variável `SERVICE_TYPE` corretamente:**
+- Backend: `SERVICE_TYPE=backend`
+- Worker: `SERVICE_TYPE=worker`
+- Frontend: `SERVICE_TYPE=frontend`
 
 ## 4. URLs e Conexões
 
