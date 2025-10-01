@@ -1,101 +1,124 @@
-# Configuração para EasyPanel
+# Configuração para EasyPanel - Monorepo
+
+## ⚠️ IMPORTANTE: Configuração de Monorepo
+
+Este projeto usa uma estrutura de monorepo (múltiplos serviços em um repositório). No EasyPanel, você precisa criar **serviços separados** para cada parte.
 
 ## Deployment no EasyPanel
 
 ### 1. Preparação do Repositório GitHub
 
-1. **Crie um repositório no GitHub** e faça push do código:
-```bash
-git init
-git add .
-git commit -m "Initial commit - Webscraping Platform"
-git remote add origin https://github.com/seu-usuario/webscraping-platform.git
-git push -u origin main
-```
+✅ **Já feito** - Código está em: `https://github.com/pedrobolado2023/webscraping-platform`
 
 ### 2. Configuração no EasyPanel
 
-#### Serviços Necessários:
+#### **Ordem de Deploy (IMPORTANTE):**
 
-1. **PostgreSQL Database**
-   - Template: PostgreSQL
-   - Database: `webscraping`
-   - Username: `postgres`
-   - Password: `[gerar senha segura]`
+### **1º - PostgreSQL Database**
+- **Template**: PostgreSQL
+- **Nome**: `webscraping-db`
+- **Database**: `webscraping`
+- **Username**: `postgres`
+- **Password**: `[gere uma senha segura]`
+- **Port**: 5432
 
-2. **Redis Cache**
-   - Template: Redis
-   - Configuração padrão
+### **2º - Redis Cache**
+- **Template**: Redis
+- **Nome**: `webscraping-redis`
+- **Port**: 6379
 
-3. **Backend API**
-   - Source: GitHub Repository
-   - Build Pack: Python
-   - Port: 8000
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-   - Working Directory: `backend/`
+### **3º - Backend API**
+- **Tipo**: App from Source
+- **Source**: GitHub Repository
+- **Repository**: `pedrobolado2023/webscraping-platform`
+- **Branch**: `main`
+- **Root Directory**: `backend/` ⚠️ **CRÍTICO**
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+- **Port**: 8000
+- **Build Provider**: Nixpacks (detectará Python automaticamente)
 
-4. **Worker**
-   - Source: GitHub Repository
-   - Build Pack: Python
-   - Build Command: `pip install -r requirements.txt && playwright install chromium`
-   - Start Command: `python worker.py`
-   - Working Directory: `worker/`
-
-5. **Frontend**
-   - Source: GitHub Repository
-   - Build Pack: Node.js
-   - Port: 3000
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm run preview -- --host 0.0.0.0 --port 3000`
-   - Working Directory: `frontend/`
-
-### 3. Variáveis de Ambiente
-
-#### Backend:
+**Variáveis de Ambiente do Backend:**
 ```
-DATABASE_URL=postgresql://postgres:[password]@[db-host]:5432/webscraping
-REDIS_URL=redis://[redis-host]:6379/0
-SECRET_KEY=[gerar chave segura]
+DATABASE_URL=postgresql://postgres:[SUA_SENHA]@[DB_HOST]:5432/webscraping
+REDIS_URL=redis://[REDIS_HOST]:6379/0
+SECRET_KEY=[GERE_UMA_CHAVE_SEGURA_ALEATORIA]
+FRONTEND_URL=https://[SEU_FRONTEND_DOMAIN]
 ```
 
-#### Frontend:
+### **4º - Worker**
+- **Tipo**: App from Source
+- **Source**: GitHub Repository  
+- **Repository**: `pedrobolado2023/webscraping-platform`
+- **Branch**: `main`
+- **Root Directory**: `worker/` ⚠️ **CRÍTICO**
+- **Build Command**: `pip install -r requirements.txt && playwright install chromium --with-deps`
+- **Start Command**: `python worker.py`
+- **Build Provider**: Nixpacks
+
+**Variáveis de Ambiente do Worker:**
 ```
-VITE_API_URL=https://[seu-backend-url]
+DATABASE_URL=postgresql://postgres:[SUA_SENHA]@[DB_HOST]:5432/webscraping
+REDIS_URL=redis://[REDIS_HOST]:6379/0
 ```
 
-#### Worker:
+### **5º - Frontend**
+- **Tipo**: App from Source
+- **Source**: GitHub Repository
+- **Repository**: `pedrobolado2023/webscraping-platform`
+- **Branch**: `main`
+- **Root Directory**: `frontend/` ⚠️ **CRÍTICO**
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm run preview -- --host 0.0.0.0 --port 3000`
+- **Port**: 3000
+- **Build Provider**: Nixpacks (detectará Node.js automaticamente)
+
+**Variáveis de Ambiente do Frontend:**
 ```
-DATABASE_URL=postgresql://postgres:[password]@[db-host]:5432/webscraping
-REDIS_URL=redis://[redis-host]:6379/0
+VITE_API_URL=https://[SEU_BACKEND_DOMAIN]
 ```
 
-### 4. Ordem de Deploy
+## 3. Configurações Especiais para Monorepo
 
-1. PostgreSQL Database
-2. Redis Cache
-3. Backend API (aguardar estar funcionando)
-4. Worker (aguardar backend estar funcionando)
-5. Frontend (configurar VITE_API_URL com URL do backend)
+### **Root Directory é OBRIGATÓRIO**
+Para cada serviço no EasyPanel, você DEVE especificar:
+- Backend: `Root Directory = backend/`
+- Frontend: `Root Directory = frontend/`  
+- Worker: `Root Directory = worker/`
 
-### 5. Configurações Especiais
+### **Arquivos de Configuração Criados**
+Cada serviço agora tem:
+- `nixpacks.toml` - Configuração Nixpacks
+- `Procfile` - Comandos de execução
+- `runtime.txt` - Versão do Python (backend/worker)
 
-#### Backend (app.main.py):
-- Adicionar o domínio do EasyPanel em `allow_origins`
+## 4. URLs e Conexões
 
-#### Worker:
-- Certificar que o Playwright está configurado para headless
-- Verificar se as dependências do sistema estão instaladas
+Após o deploy, você terá:
+- **Database**: URL interna do PostgreSQL
+- **Redis**: URL interna do Redis
+- **Backend**: `https://[seu-backend].easypanel.host`
+- **Worker**: Executa em background (sem URL pública)
+- **Frontend**: `https://[seu-frontend].easypanel.host`
 
-### 6. Monitoramento
+## 5. Testando o Deploy
 
-- Verificar logs de cada serviço no EasyPanel
-- Testar endpoints: `https://[backend-url]/health`
-- Testar frontend: `https://[frontend-url]`
+1. **Teste o Backend**: `https://[backend-url]/health`
+2. **Teste o Frontend**: Abra a URL e tente fazer login
+3. **Verifique os Logs**: No painel do EasyPanel
 
-### 7. Troubleshooting
+## 6. Troubleshooting
 
-- **Erro de conexão DB**: Verificar DATABASE_URL
-- **Worker não processa jobs**: Verificar conexão Redis
-- **Frontend não conecta**: Verificar VITE_API_URL
-- **CORS errors**: Adicionar domínio frontend em backend CORS
+### **Erro "Nixpacks unable to generate build plan"**
+✅ **Resolvido** - Adicionados arquivos de configuração específicos
+
+### **Erro de CORS**
+- Adicione a URL do frontend em `FRONTEND_URL` no backend
+
+### **Worker não processa jobs**
+- Verifique conexão Redis
+- Verifique logs do worker
+
+### **Frontend não carrega**
+- Verifique `VITE_API_URL`
+- Teste conexão com backend
