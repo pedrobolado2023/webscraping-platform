@@ -6,6 +6,8 @@ Como o EasyPanel não suporta Root Directory, criei uma configuração que usa a
 
 ## Deployment no EasyPanel
 
+### **ORDEM DE IMPLANTAÇÃO:**
+
 ### **1º - PostgreSQL Database**
 - **Template**: PostgreSQL
 - **Nome**: `webscraping-db`
@@ -21,14 +23,15 @@ Como o EasyPanel não suporta Root Directory, criei uma configuração que usa a
 - **Tipo**: App from Source
 - **Repository**: `pedrobolado2023/webscraping-platform`
 - **Branch**: `main`
-- **Build Provider**: Nixpacks (detectará Python pelo requirements.txt)
+- **Build Provider**: Nixpacks (detectará Python/Node.js automaticamente)
 
-**Variáveis de Ambiente:**
+**⚠️ IMPORTANTE: Use exatamente estas variáveis de ambiente:**
 ```
 SERVICE_TYPE=backend
 DATABASE_URL=postgresql://postgres:[SUA_SENHA]@[DB_HOST]:5432/webscraping
 REDIS_URL=redis://[REDIS_HOST]:6379/0
 SECRET_KEY=[GERE_UMA_CHAVE_SEGURA]
+ALGORITHM=HS256
 FRONTEND_URL=https://[SEU_FRONTEND_DOMAIN]
 ```
 
@@ -91,12 +94,40 @@ Após o deploy, você terá:
 ### **Erro "Nixpacks unable to generate build plan"**
 ✅ **Resolvido** - Adicionados arquivos de configuração específicos
 
+### **Erro 502 (Bad Gateway)**
+**Possíveis causas:**
+- **SERVICE_TYPE não definido** - Verifique se a variável está configurada
+- **Variáveis de ambiente faltando** - Consulte `.env.example`
+- **Backend não iniciou** - Verifique DATABASE_URL e REDIS_URL
+- **Frontend não construiu** - Verifique se npm build executou corretamente
+
+**Como diagnosticar:**
+1. Verifique os logs do serviço no EasyPanel
+2. Teste o endpoint `/health` do backend
+3. Confirme se `SERVICE_TYPE` está definido corretamente
+4. Verifique se todas as URLs de dependências estão corretas
+
 ### **Erro de CORS**
 - Adicione a URL do frontend em `FRONTEND_URL` no backend
+- Exemplo: `FRONTEND_URL=https://seu-frontend.easypanel.host`
 
 ### **Worker não processa jobs**
-- Verifique conexão Redis
-- Verifique logs do worker
+- Verifique conexão Redis com `REDIS_URL`
+- Verifique logs do worker no EasyPanel
+- Confirme se `SERVICE_TYPE=worker` está definido
+
+### **Frontend não conecta ao backend**
+- Verifique se `VITE_API_URL` aponta para o backend correto
+- Exemplo: `VITE_API_URL=https://seu-backend.easypanel.host`
+
+**📋 Checklist para deploy com erro 502:**
+- [ ] DATABASE_URL configurado corretamente
+- [ ] REDIS_URL configurado corretamente  
+- [ ] SERVICE_TYPE definido (backend/worker/frontend)
+- [ ] FRONTEND_URL no backend aponta para frontend
+- [ ] VITE_API_URL no frontend aponta para backend
+- [ ] SECRET_KEY definido no backend
+- [ ] Logs do serviço verificados no EasyPanel
 
 ### **Frontend não carrega**
 - Verifique `VITE_API_URL`

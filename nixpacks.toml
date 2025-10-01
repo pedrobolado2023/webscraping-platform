@@ -1,5 +1,19 @@
 # EasyPanel monorepo configuration
-# Default to backend, change SERVICE_TYPE environment variable for other services
+# Detects service type and configures build accordingly
+
+[variables]
+SERVICE_TYPE = "backend"
+
+[phases.setup]
+nixPkgs = ["python3", "nodejs", "npm", "postgresql_16.dev", "gcc"]
+
+[phases.install]
+cmds = [
+  "if [ \"$SERVICE_TYPE\" = \"frontend\" ]; then cd frontend && npm ci && npm run build; elif [ \"$SERVICE_TYPE\" = \"worker\" ] || [ \"$SERVICE_TYPE\" = \"backend\" ]; then python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt; fi"
+]
+
+[phases.build]
+cmds = ["echo 'Build phase completed for $SERVICE_TYPE'"]
 
 [start]
 cmd = 'if [ "$SERVICE_TYPE" = "frontend" ]; then cd frontend && npm run preview -- --host 0.0.0.0 --port $PORT; elif [ "$SERVICE_TYPE" = "worker" ]; then cd worker && python worker.py; else cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT; fi'
