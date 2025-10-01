@@ -1,6 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, Play, Edit, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 const JobList: React.FC = () => {
   return (

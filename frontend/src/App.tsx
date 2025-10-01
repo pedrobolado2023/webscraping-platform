@@ -1,5 +1,4 @@
-import React, { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import JobList from './components/JobList'
@@ -9,11 +8,13 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 
 function App() {
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-gray-50">
-        <AppRoutes />
-      </div>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-50">
+          <AppRoutes />
+        </div>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

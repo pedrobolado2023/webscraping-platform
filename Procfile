@@ -1,1 +1,1 @@
-web: if [ "$SERVICE_TYPE" = "frontend" ]; then cd frontend && npm ci && npm run build && npm run preview -- --host 0.0.0.0 --port $PORT; elif [ "$SERVICE_TYPE" = "worker" ]; then cd worker && python worker.py; else cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT; fi
+web: if [ "$SERVICE_TYPE" = "frontend" ]; then cd frontend && npm ci && npm run build && npx serve -s dist -l $PORT; elif [ "$SERVICE_TYPE" = "worker" ]; then cd worker && python worker.py; else cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT; fi
