@@ -1,8 +1,11 @@
 # Configuração para EasyPanel - Monorepo
 
-## ⚠️ SOLUÇÃO: Usar Variável SERVICE_TYPE
+## ⚠️ SOLUÇÃO: Configuração Simplificada com SERVICE_TYPE
 
-Como o EasyPanel não suporta Root Directory, criei uma configuração que usa a variável de ambiente `SERVICE_TYPE` para determinar qual serviço executar.
+Como o EasyPanel teve problemas com configurações Nixpacks complexas, implementei uma solução mais simples:
+- **Auto-detecção**: Nixpacks detecta automaticamente Python e Node.js baseado nos arquivos
+- **Build Inline**: Frontend executa `npm ci && npm run build` no momento do start
+- **Configuração Mínima**: Apenas o comando start é customizado via SERVICE_TYPE
 
 ## Deployment no EasyPanel
 
@@ -90,6 +93,15 @@ Após o deploy, você terá:
 3. **Verifique os Logs**: No painel do EasyPanel
 
 ## 6. Troubleshooting
+
+### **Erro "undefined variable 'npm'"**
+✅ **Resolvido** - Removida configuração complexa do Nixpacks, agora usa auto-detecção
+
+### **Build falha no frontend**
+**Solução**: O frontend agora executa build inline durante o start:
+```bash
+cd frontend && npm ci && npm run build && npm run preview
+```
 
 ### **Erro "Nixpacks unable to generate build plan"**
 ✅ **Resolvido** - Adicionados arquivos de configuração específicos
